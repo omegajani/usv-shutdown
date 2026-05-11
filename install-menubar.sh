@@ -6,29 +6,26 @@ set -euo pipefail
 
 AGENT_ID="local.usv-shutdown-menubar"
 APP_DIR="$HOME/Library/Application Support/usv-shutdown"
+VENV="$APP_DIR/venv"
 PLIST="$HOME/Library/LaunchAgents/${AGENT_ID}.plist"
 LOG="$HOME/Library/Logs/usv-shutdown.log"
 REPO_RAW="https://raw.githubusercontent.com/omegajani/usv-shutdown/main"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo "")"
-# Homebrew-Python bevorzugen (hat pre-built pyobjc-Wheels, Xcode-Python nicht)
+
+# Homebrew-Python bevorzugen (hat pre-built pyobjc-Wheels)
 if [[ -x /opt/homebrew/bin/python3 ]]; then
-    PYTHON="/opt/homebrew/bin/python3"
+    BASE_PYTHON="/opt/homebrew/bin/python3"
 elif [[ -x /usr/local/bin/python3 ]]; then
-    PYTHON="/usr/local/bin/python3"
+    BASE_PYTHON="/usr/local/bin/python3"
 else
-    PYTHON="$(which python3)"
+    BASE_PYTHON="$(which python3)"
 fi
 
 echo ""
 echo "🔧  USV Shutdown Menüleiste – Installer"
 echo "────────────────────────────────────────"
 
-# ── 1. Python-Abhängigkeit ────────────────────────────────────────────────────
-echo "→  Installiere rumps …"
-"$PYTHON" -m pip install --break-system-packages --quiet rumps
-echo "✓  rumps OK"
-
-# ── 2. App-Datei installieren ─────────────────────────────────────────────────
+# ── 1. App-Datei installieren ─────────────────────────────────────────────────
 mkdir -p "$APP_DIR"
 if [[ -f "$SCRIPT_DIR/usv_menubar_shutdown.py" ]]; then
     cp "$SCRIPT_DIR/usv_menubar_shutdown.py" "$APP_DIR/usv_menubar_shutdown.py"
@@ -39,6 +36,15 @@ else
     echo "✓  App heruntergeladen"
 fi
 chmod 755 "$APP_DIR/usv_menubar_shutdown.py"
+
+# ── 2. Virtual Environment + rumps ───────────────────────────────────────────
+echo "→  Erstelle Python-Umgebung …"
+"$BASE_PYTHON" -m venv "$VENV"
+"$VENV/bin/pip" install --quiet --upgrade pip
+"$VENV/bin/pip" install --quiet rumps
+echo "✓  rumps installiert ($("$VENV/bin/python3" -c 'import rumps; print(rumps.__version__)'))"
+
+PYTHON="$VENV/bin/python3"
 
 # ── 3. sudoers für lokalen Shutdown ──────────────────────────────────────────
 SUDOERS="/etc/sudoers.d/usv-shutdown"
