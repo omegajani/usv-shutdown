@@ -25,6 +25,25 @@ import rumps
 
 PORT = 47777
 _LOCAL_NAME = socket.gethostname().split(".")[0].lower()
+_CONFIG_FILE = os.path.expanduser(
+    "~/Library/Application Support/usv-shutdown/config.json"
+)
+
+
+def _load_delay() -> int:
+    try:
+        with open(_CONFIG_FILE) as f:
+            return int(json.load(f).get("delay", 60))
+    except Exception:
+        return 60
+
+
+def _save_delay(val: int) -> None:
+    try:
+        with open(_CONFIG_FILE, "w") as f:
+            json.dump({"delay": val}, f)
+    except Exception:
+        pass
 # Bevorzugt lokale Entwicklungsversion, fällt auf installierten Pfad zurück
 USV_BIN = (
     shutil.which("usv")
@@ -165,7 +184,7 @@ class USVShutdownApp(rumps.App):
         self._clients: list[tuple[str, str, int]] = []
         self._online: dict[str, bool] = {}
         self._usvs: list[tuple[str, int, str]] = []
-        self._delay = 60
+        self._delay = _load_delay()
         self._lock = threading.Lock()
         self._needs_rebuild = False
         self._dialog_queue: queue.Queue = queue.Queue()
@@ -412,6 +431,7 @@ class USVShutdownApp(rumps.App):
             val = int(resp.text.strip())
             if 12 <= val <= 5940:
                 self._delay = val
+                _save_delay(val)
                 self._needs_rebuild = True
 
 
