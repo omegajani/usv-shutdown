@@ -5,6 +5,7 @@ Installieren: sudo ./install-agent.sh
 Manuell:      sudo python3 usv_agent.py
 Test:         curl http://localhost:47777/
 """
+from __future__ import annotations
 
 import http.server
 import json
