@@ -17,15 +17,18 @@ Master-Mac (mit USVs)              Client-Mac(s)
 │  usv_menubar_shutdown  │ ──────→ │  (LaunchDaemon,     │
 │                        │ ←────── │   Port 47777)       │
 │  Bonjour-Discovery     │  mDNS   │  Bonjour-Advertise  │
-│  usv shutdown --all    │         └─────────────────────┘
-│  sudo shutdown -h now  │
-└────────────────────────┘
+│  usv shutdown --all    │         │                     │
+│  sudo shutdown -h now  │         │  🖥 Client-Icon     │
+└────────────────────────┘         │  (zeigt Agent-Status│
+                                   │   in Menüleiste)    │
+                                   └─────────────────────┘
 ```
 
 **Shutdown-Reihenfolge:**
 1. Alle Client-Macs via HTTP herunterfahren
-2. USV-Shutdown-Timer setzen (`usv shutdown --all --yes <delay>`)
-3. Dieser Mac fährt runter
+2. Warten bis alle Clients offline sind (Save-Dialoge werden abgewartet, max. 3 Min.)
+3. USV-Shutdown-Timer setzen (`usv shutdown --all --yes <delay>`)
+4. Dieser Mac fährt runter
 
 ---
 
@@ -37,15 +40,23 @@ Master-Mac (mit USVs)              Client-Mac(s)
 curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-menubar.sh | bash
 ```
 
-→ Installiert die Menüleisten-App, startet sie automatisch bei Login.
+→ Installiert die Menüleisten-App (🔌), startet sie automatisch bei Login.
 
-### Client-Macs (alle anderen Macs die heruntergefahren werden sollen)
+### Client-Macs — Shutdown-Agent (Pflicht)
 
 ```bash
 curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-agent.sh | sudo bash
 ```
 
-→ Installiert den Shutdown-Agent als LaunchDaemon (startet bei Systemstart automatisch).
+→ Installiert den Shutdown-Agent als root-LaunchDaemon (Port 47777, startet automatisch).
+
+### Client-Macs — Menüleisten-Icon (optional)
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-client-menubar.sh | bash
+```
+
+→ Zeigt ein 🖥-Icon in der Menüleiste: grün wenn der Agent läuft, ⚠️ wenn nicht erreichbar.
 
 ---
 
@@ -57,8 +68,11 @@ Einfach den jeweiligen Installer erneut ausführen — er überschreibt die best
 # Master-Mac
 curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-menubar.sh | bash
 
-# Client-Mac
+# Client-Mac (Agent)
 curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-agent.sh | sudo bash
+
+# Client-Mac (Menüleisten-Icon)
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-client-menubar.sh | bash
 ```
 
 ---
@@ -69,8 +83,11 @@ curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-agent
 # Master-Mac
 curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-menubar.sh | bash
 
-# Client-Mac
+# Client-Mac (Agent)
 curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-agent.sh | sudo bash
+
+# Client-Mac (Menüleisten-Icon)
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-client-menubar.sh | bash
 ```
 
 ---
@@ -81,7 +98,10 @@ curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-age
 |---|---|
 | `usv_agent.py` | Shutdown-Agent (läuft auf Client-Macs als root-Daemon) |
 | `usv_menubar_shutdown.py` | Menüleisten-App (läuft auf Master-Mac) |
-| `install-agent.sh` | Installer für Client-Macs |
-| `install-menubar.sh` | Installer für Master-Mac |
-| `uninstall-agent.sh` | Deinstallation Client-Mac |
-| `uninstall-menubar.sh` | Deinstallation Master-Mac |
+| `usv_client_menubar.py` | Optionales Status-Icon für Client-Macs (🖥 / ⚠️) |
+| `install-agent.sh` | Installer Shutdown-Agent (Client-Mac) |
+| `install-menubar.sh` | Installer Menüleisten-App (Master-Mac) |
+| `install-client-menubar.sh` | Installer Status-Icon (Client-Mac) |
+| `uninstall-agent.sh` | Deinstallation Agent (Client-Mac) |
+| `uninstall-menubar.sh` | Deinstallation Menüleisten-App (Master-Mac) |
+| `uninstall-client-menubar.sh` | Deinstallation Status-Icon (Client-Mac) |
