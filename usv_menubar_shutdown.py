@@ -7,6 +7,8 @@ Manuell:      python3 usv_menubar_shutdown.py
 from __future__ import annotations
 
 import json
+import os
+import pty
 import queue
 import re
 import select
@@ -31,52 +33,67 @@ ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 # ── Discovery ─────────────────────────────────────────────────────────────────
 
-def _browse_mdns(timeout: float) -> list[str]:
-    """Gibt Liste der gefundenen Bonjour-Instanznamen zurück."""
-    proc = subprocess.Popen(
-        ["dns-sd", "-B", "_usv-agent._tcp", "local"],
-        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
-    )
-    instances: list[str] = []
+def _run_dnssd_pty(cmd: list[str], timeout: float, on_line) -> None:
+    """Führt ein dns-sd Kommando über ein PTY aus (verhindert Pipe-Buffering).
+
+    on_line(line: str) wird für jede Zeile aufgerufen, bis timeout abläuft
+    oder on_line gibt False zurück.
+    """
+    master, slave = pty.openpty()
+    proc = subprocess.Popen(cmd, stdout=slave, stderr=slave)
+    os.close(slave)
+    buf = b""
     end = time.monotonic() + timeout
     try:
         while time.monotonic() < end:
             left = end - time.monotonic()
-            r, _, _ = select.select([proc.stdout], [], [], min(0.2, left))
+            r, _, _ = select.select([master], [], [], min(0.2, left))
             if r:
-                line = proc.stdout.readline()
-                if "Add" in line:
-                    parts = line.split()
-                    if len(parts) >= 7:
-                        instances.append(parts[-1])
+                try:
+                    buf += os.read(master, 4096)
+                except OSError:
+                    break
+                while b"\n" in buf:
+                    raw, buf = buf.split(b"\n", 1)
+                    line = raw.decode(errors="replace").strip()
+                    if on_line(line) is False:
+                        return
     finally:
         proc.kill()
         proc.wait()
+        os.close(master)
+
+
+def _browse_mdns(timeout: float) -> list[str]:
+    """Gibt deduplizierte Liste der gefundenen Bonjour-Instanznamen zurück."""
+    seen: set[str] = set()
+    instances: list[str] = []
+
+    def on_line(line: str):
+        if "Add" in line:
+            parts = line.split()
+            if len(parts) >= 7:
+                name = parts[-1]
+                if name not in seen:
+                    seen.add(name)
+                    instances.append(name)
+
+    _run_dnssd_pty(["dns-sd", "-B", "_usv-agent._tcp"], timeout, on_line)
     return instances
 
 
 def _resolve_mdns(instance: str, timeout: float) -> tuple[str, int] | None:
     """Löst Bonjour-Instanzname → (host, port) auf."""
-    proc = subprocess.Popen(
-        ["dns-sd", "-L", instance, "_usv-agent._tcp", "local"],
-        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
-    )
-    end = time.monotonic() + timeout
-    result = None
-    try:
-        while time.monotonic() < end:
-            left = end - time.monotonic()
-            r, _, _ = select.select([proc.stdout], [], [], min(0.2, left))
-            if r:
-                line = proc.stdout.readline()
-                m = re.search(r"reached at (.+?):(\d+)", line)
-                if m:
-                    result = (m.group(1).rstrip("."), int(m.group(2)))
-                    break
-    finally:
-        proc.kill()
-        proc.wait()
-    return result
+    result: list[tuple[str, int] | None] = [None]
+
+    def on_line(line: str):
+        m = re.search(r"reached at (.+?):(\d+)", line)
+        if m:
+            result[0] = (m.group(1).rstrip("."), int(m.group(2)))
+            return False  # fertig
+
+    _run_dnssd_pty(["dns-sd", "-L", instance, "_usv-agent._tcp", "local"], timeout, on_line)
+    return result[0]
 
 
 def discover_agents() -> list[tuple[str, str, int]]:
