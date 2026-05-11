@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # USV Agent – Installer für Client-Macs
 # Lokal:   sudo ./install-agent.sh
-# Via URL: curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install-agent.sh | sudo bash
+# Via URL: curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-agent.sh | sudo bash
 set -euo pipefail
 
 DAEMON_ID="local.usv-agent"
 AGENT_DIR="/usr/local/lib/usv-agent"
 PLIST="/Library/LaunchDaemons/${DAEMON_ID}.plist"
-REPO_RAW="https://raw.githubusercontent.com/omegajani/usv-shutdown/main"
+REPO_RAW="https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo "")"
 
 if [[ $EUID -ne 0 ]]; then

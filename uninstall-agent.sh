@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # USV Agent – Deinstallation
 # Aufruf: sudo ./uninstall-agent.sh
-# Via URL: curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/uninstall-agent.sh | sudo bash
+# Via URL: curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-agent.sh | sudo bash
 set -euo pipefail
 
 DAEMON_ID="local.usv-agent"

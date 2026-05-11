@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # USV Shutdown Menüleiste – Installer für den Master-Mac (mit USVs)
 # Lokal:   ./install-menubar.sh
-# Via URL: curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install-menubar.sh | bash
+# Via URL: curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-menubar.sh | bash
 set -euo pipefail
 
 AGENT_ID="local.usv-shutdown-menubar"
@@ -9,7 +9,7 @@ APP_DIR="$HOME/Library/Application Support/usv-shutdown"
 VENV="$APP_DIR/venv"
 PLIST="$HOME/Library/LaunchAgents/${AGENT_ID}.plist"
 LOG="$HOME/Library/Logs/usv-shutdown.log"
-REPO_RAW="https://raw.githubusercontent.com/omegajani/usv-shutdown/main"
+REPO_RAW="https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo "")"
 
 # Homebrew-Python bevorzugen (hat pre-built pyobjc-Wheels)

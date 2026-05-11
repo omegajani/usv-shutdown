@@ -34,7 +34,7 @@ Master-Mac (mit USVs)              Client-Mac(s)
 ### Master-Mac (mit USVs)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install-menubar.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-menubar.sh | bash
 ```
 
 → Installiert die Menüleisten-App, startet sie automatisch bei Login.
@@ -42,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install
 ### Client-Macs (alle anderen Macs die heruntergefahren werden sollen)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install-agent.sh | sudo bash
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-agent.sh | sudo bash
 ```
 
 → Installiert den Shutdown-Agent als LaunchDaemon (startet bei Systemstart automatisch).
@@ -55,10 +55,10 @@ Einfach den jeweiligen Installer erneut ausführen — er überschreibt die best
 
 ```bash
 # Master-Mac
-curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install-menubar.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-menubar.sh | bash
 
 # Client-Mac
-curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install-agent.sh | sudo bash
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/install-agent.sh | sudo bash
 ```
 
 ---
@@ -67,10 +67,10 @@ curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/install
 
 ```bash
 # Master-Mac
-curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/uninstall-menubar.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-menubar.sh | bash
 
 # Client-Mac
-curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/uninstall-agent.sh | sudo bash
+curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-agent.sh | sudo bash
 ```
 
 ---

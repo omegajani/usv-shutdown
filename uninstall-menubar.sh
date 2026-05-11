@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # USV Shutdown Menüleiste – Deinstallation
 # Aufruf: ./uninstall-menubar.sh
-# Via URL: curl -fsSL https://raw.githubusercontent.com/omegajani/usv-shutdown/main/uninstall-menubar.sh | bash
+# Via URL: curl -fsSL https://cdn.jsdelivr.net/gh/omegajani/usv-shutdown@main/uninstall-menubar.sh | bash
 set -euo pipefail
 
 AGENT_ID="local.usv-shutdown-menubar"
