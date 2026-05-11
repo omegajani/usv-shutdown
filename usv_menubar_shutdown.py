@@ -287,7 +287,11 @@ class USVShutdownApp(rumps.App):
             online = dict(self._online)
             delay = self._delay
 
-        lines = ["Folgende Aktionen werden ausgeführt:\n"]
+        lines = ["Reihenfolge:\n"]
+        lines.append("  1.  Clients herunterfahren + auf vollständiges Shutdown warten")
+        lines.append("  2.  USV-Shutdown-Timer starten")
+        lines.append("  3.  Dieser Mac\n")
+        lines.append("Clients:")
         for name, host, _ in clients:
             ok = online.get(host, False)
             lines.append(f"  {'●' if ok else '⚠'}  {name}  ({'erreichbar' if ok else 'OFFLINE'})")
@@ -295,9 +299,8 @@ class USVShutdownApp(rumps.App):
         if not clients:
             lines.append("  (keine Client-Macs gefunden)")
 
-        lines.append(f"\n  ●  Alle USVs: Shutdown-Timer ({delay}s)")
-        lines.append("  ●  Dieser Mac\n")
-        lines.append("Diese Aktion ist nicht rückgängig zu machen!")
+        lines.append(f"\nUSV-Delay nach Client-Shutdown: {delay}s")
+        lines.append("\nDiese Aktion ist nicht rückgängig zu machen!")
 
         response = rumps.alert(
             title="⚠  Alles herunterfahren?",
@@ -318,19 +321,47 @@ class USVShutdownApp(rumps.App):
         online: dict[str, bool],
         delay: int,
     ) -> None:
-        # ── Schritt 1: Client-Macs ────────────────────────────────────────────
+        # ── Schritt 1: Shutdown-Befehl an alle Clients ────────────────────────
         errors: list[str] = []
+        shutdown_sent: list[tuple[str, str, int]] = []
         for name, host, port in clients:
             if not online.get(host):
                 continue
             ok, msg = shutdown_agent(host, port)
-            if not ok:
+            if ok:
+                shutdown_sent.append((name, host, port))
+            else:
                 errors.append(f"{name}: {msg}")
 
         if errors and not self._ask_main("Client-Shutdown fehlgeschlagen", "\n".join(errors)):
             return
 
-        # ── Schritt 2: USVs ───────────────────────────────────────────────────
+        # ── Schritt 2: Warten bis alle Clients offline sind ───────────────────
+        if shutdown_sent:
+            TIMEOUT = 180
+            POLL = 5
+            deadline = time.monotonic() + TIMEOUT
+            pending = {host: (name, port) for name, host, port in shutdown_sent}
+
+            while pending and time.monotonic() < deadline:
+                self.title = f"⏳  Warte auf {len(pending)} Mac(s)…"
+                time.sleep(POLL)
+                pending = {
+                    h: (n, p) for h, (n, p) in pending.items()
+                    if ping_agent(h, p)
+                }
+
+            self._needs_rebuild = True
+
+            if pending:
+                names = ", ".join(n for n, _ in pending.values())
+                if not self._ask_main(
+                    "Clients noch aktiv",
+                    f"{names} ist nach {TIMEOUT}s noch erreichbar.\nTrotzdem fortfahren?",
+                ):
+                    return
+
+        # ── Schritt 3: USV-Countdown ──────────────────────────────────────────
         try:
             r = subprocess.run(
                 [USV_BIN, "shutdown", "--all", "--yes", str(delay)],
@@ -344,7 +375,7 @@ class USVShutdownApp(rumps.App):
             if not self._ask_main("USV-Fehler", str(exc)):
                 return
 
-        # ── Schritt 3: Dieser Mac ─────────────────────────────────────────────
+        # ── Schritt 4: Dieser Mac ─────────────────────────────────────────────
         time.sleep(1)
         subprocess.run(["sudo", "-n", "shutdown", "-h", "now"])
 
