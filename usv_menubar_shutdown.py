@@ -12,6 +12,7 @@ import pty
 import queue
 import re
 import select
+import socket
 import subprocess
 import threading
 import time
@@ -23,6 +24,7 @@ import shutil
 import rumps
 
 PORT = 47777
+_LOCAL_NAME = socket.gethostname().split(".")[0].lower()
 # Bevorzugt lokale Entwicklungsversion, fällt auf installierten Pfad zurück
 USV_BIN = (
     shutil.which("usv")
@@ -97,10 +99,12 @@ def _resolve_mdns(instance: str, timeout: float) -> tuple[str, int] | None:
 
 
 def discover_agents() -> list[tuple[str, str, int]]:
-    """Gibt [(name, host, port), ...] via mDNS zurück."""
+    """Gibt [(name, host, port), ...] via mDNS zurück — ohne den lokalen Rechner."""
     instances = _browse_mdns(timeout=2.5)
     results = []
     for inst in instances:
+        if inst.lower() == _LOCAL_NAME:
+            continue  # Master-Mac nie als Client behandeln
         resolved = _resolve_mdns(inst, timeout=1.5)
         if resolved:
             host, port = resolved
