@@ -85,13 +85,24 @@ PLIST_EOF
 
 echo "✓  LaunchAgent: $PLIST"
 
-# ── 5. Starten ────────────────────────────────────────────────────────────────
-UID_VAL="$(id -u)"
+# ── 5. App-Verzeichnis dem User geben (falls sudo genutzt wurde) ──────────────
+if [[ -n "${SUDO_USER:-}" ]]; then
+    chown -R "$SUDO_USER" "$APP_DIR"
+fi
+
+# ── 6. LaunchAgent als normaler User starten (nicht als root) ─────────────────
+# Bei sudo-Aufruf: SUDO_USER enthält den echten User, SUDO_UID seine UID
+REAL_UID="${SUDO_UID:-$(id -u)}"
+REAL_USER="${SUDO_USER:-$(whoami)}"
 if launchctl list "$AGENT_ID" &>/dev/null; then
-    launchctl bootout "gui/${UID_VAL}" "$PLIST" 2>/dev/null || true
+    launchctl bootout "gui/${REAL_UID}" "$PLIST" 2>/dev/null || true
     sleep 1
 fi
-launchctl bootstrap "gui/${UID_VAL}" "$PLIST"
+if [[ -n "${SUDO_USER:-}" ]]; then
+    sudo -u "$REAL_USER" launchctl bootstrap "gui/${REAL_UID}" "$PLIST"
+else
+    launchctl bootstrap "gui/${REAL_UID}" "$PLIST"
+fi
 echo "✓  LaunchAgent gestartet"
 
 echo ""
