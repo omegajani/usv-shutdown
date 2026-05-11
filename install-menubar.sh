@@ -10,7 +10,14 @@ PLIST="$HOME/Library/LaunchAgents/${AGENT_ID}.plist"
 LOG="$HOME/Library/Logs/usv-shutdown.log"
 REPO_RAW="https://raw.githubusercontent.com/omegajani/usv-shutdown/main"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo "")"
-PYTHON="$(which python3)"
+# Homebrew-Python bevorzugen (hat pre-built pyobjc-Wheels, Xcode-Python nicht)
+if [[ -x /opt/homebrew/bin/python3 ]]; then
+    PYTHON="/opt/homebrew/bin/python3"
+elif [[ -x /usr/local/bin/python3 ]]; then
+    PYTHON="/usr/local/bin/python3"
+else
+    PYTHON="$(which python3)"
+fi
 
 echo ""
 echo "🔧  USV Shutdown Menüleiste – Installer"
@@ -18,7 +25,7 @@ echo "────────────────────────�
 
 # ── 1. Python-Abhängigkeit ────────────────────────────────────────────────────
 echo "→  Installiere rumps …"
-"$PYTHON" -m pip install --user --quiet rumps
+"$PYTHON" -m pip install --break-system-packages --quiet rumps
 echo "✓  rumps OK"
 
 # ── 2. App-Datei installieren ─────────────────────────────────────────────────
