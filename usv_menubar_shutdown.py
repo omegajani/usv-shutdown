@@ -4,6 +4,7 @@
 Installieren: ./install-menubar.sh
 Manuell:      python3 usv_menubar_shutdown.py
 """
+from __future__ import annotations
 
 import json
 import queue
